@@ -23,17 +23,6 @@ services:
     networks:
         default:
         internal:
-
-  nginx:
-    image: nginx:stable
-    restart: always
-    volumes:
-      - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
-    ports:
-      - 80:80
-    depends_on:
-      - ctfd
-
   db:
     image: mariadb:10.11
     restart: always
