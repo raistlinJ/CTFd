@@ -63,6 +63,26 @@ To use the auto-generated Docker images directly:
 2. Modify [CTFd/config.ini](https://github.com/CTFd/CTFd/blob/master/CTFd/config.ini) to your liking.
 3. Use `uv run serve.py` or `uv run flask run` in a terminal to drop into debug mode.
 
+## Retracting solves
+
+This checkout adds solve retraction to CTFd 3.8.9. In the default `core` theme,
+open a solved challenge and choose **Retract solve**, then confirm. The challenge
+becomes unsolved and can be solved again. In team mode, any current teammate can
+retract the team's solve, including a solve submitted by another teammate.
+
+Retraction removes the successful submission and its points, updates the
+scoreboard, and recalculates dynamic challenge values for all remaining solvers.
+Failed attempts, hint purchases, and other awards remain. Prerequisites and
+solutions restricted to solvers follow the updated solve status. The action is
+recorded in the submissions log and is available only during an active, unpaused
+CTF for visible, unlocked challenges.
+
+Custom clients can use `DELETE /api/v1/challenges/<challenge_id>/solve` with normal
+CTFd authentication and CSRF protection. The endpoint always targets the current
+user or team; it returns 404 if that account has no solve. Challenge plugins inherit
+`BaseChallenge.retract(solve)` and can override it for custom scoring behavior.
+No database migration is required.
+
 ## Live Demo
 
 https://demo.ctfd.io/

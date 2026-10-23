@@ -304,6 +304,18 @@ class BaseChallenge(object):
             calculate_value(challenge)
 
     @classmethod
+    def retract(cls, solve):
+        """Remove a solve and update its challenge's dynamic value if needed."""
+        challenge = solve.challenge
+        db.session.delete(solve)
+        db.session.flush()
+
+        if challenge.function in DECAY_FUNCTIONS:
+            calculate_value(challenge)
+        else:
+            db.session.commit()
+
+    @classmethod
     def fail(cls, user, team, challenge, request):
         """
         This method is used to insert Fails into the database in order to mark an answer incorrect.
