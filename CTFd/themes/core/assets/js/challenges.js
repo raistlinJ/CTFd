@@ -71,6 +71,9 @@ Alpine.data("Challenge", () => ({
   submissions: [],
   solution: null,
   response: null,
+  solved: false,
+  retracting: false,
+  retractionError: null,
   share_url: null,
   max_attempts: 0,
   attempts: 0,
@@ -223,7 +226,35 @@ Alpine.data("Challenge", () => ({
     await this.renderSubmissionResponse();
   },
 
+  async retractSolve() {
+    if (this.retracting || !window.confirm(this.$el.dataset.confirm)) {
+      return;
+    }
+
+    this.retracting = true;
+    this.retractionError = null;
+    try {
+      const response = await CTFd.fetch(`/api/v1/challenges/${this.id}/solve`, {
+        method: "DELETE",
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error("Retraction failed");
+      }
+
+      // Refresh scores, solve counts, prerequisites, and solution access together.
+      window.location.reload();
+    } catch (error) {
+      this.retractionError = this.$el.dataset.error;
+      this.retracting = false;
+    }
+  },
+
   async renderSubmissionResponse() {
+    if (["correct", "already_solved"].includes(this.response.data.status)) {
+      this.solved = true;
+    }
+
     if (this.response.data.status === "correct") {
       this.submission = "";
     }

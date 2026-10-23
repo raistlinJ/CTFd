@@ -145,6 +145,13 @@ class DynamicValueChallenge(BaseChallenge):
 
         DynamicValueChallenge.calculate_value(challenge)
 
+    @classmethod
+    def retract(cls, solve):
+        challenge = solve.challenge
+        super().retract(solve)
+
+        DynamicValueChallenge.calculate_value(challenge)
+
 
 def load(app):
     upgrade(plugin_name="dynamic_challenges")

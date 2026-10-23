@@ -56,6 +56,26 @@ Or you can use Docker Compose with the following command from the source reposit
 
 Check out the [CTFd docs](https://docs.ctfd.io/) for [deployment options](https://docs.ctfd.io/docs/deployment/installation) and the [Getting Started](https://docs.ctfd.io/tutorials/getting-started/) guide
 
+## Retracting solves
+
+This checkout adds solve retraction to CTFd 3.8.9. In the default `core` theme,
+open a solved challenge and choose **Retract solve**, then confirm. The challenge
+becomes unsolved and can be solved again. In team mode, any current teammate can
+retract the team's solve, including a solve submitted by another teammate.
+
+Retraction removes the successful submission and its points, updates the
+scoreboard, and recalculates dynamic challenge values for all remaining solvers.
+Failed attempts, hint purchases, and other awards remain. Prerequisites and
+solutions restricted to solvers follow the updated solve status. The action is
+recorded in the submissions log and is available only during an active, unpaused
+CTF for visible, unlocked challenges.
+
+Custom clients can use `DELETE /api/v1/challenges/<challenge_id>/solve` with normal
+CTFd authentication and CSRF protection. The endpoint always targets the current
+user or team; it returns 404 if that account has no solve. Challenge plugins inherit
+`BaseChallenge.retract(solve)` and can override it for custom scoring behavior.
+No database migration is required.
+
 ## Live Demo
 
 https://demo.ctfd.io/

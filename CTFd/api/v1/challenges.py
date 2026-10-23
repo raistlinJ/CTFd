@@ -1049,6 +1049,53 @@ class ChallengeAttempt(Resource):
                 cache.delete(submission_lock_key)
 
 
+@challenges_namespace.route("/<int:challenge_id>/solve")
+class ChallengeSolve(Resource):
+    @authed_only
+    @check_challenge_visibility
+    @require_verified_emails
+    @challenges_namespace.doc(
+        description="Retract the current user's or team's solve for a challenge",
+        responses={
+            200: ("Success", "APISimpleSuccessResponse"),
+            403: ("Retraction is not allowed", "APISimpleErrorResponse"),
+            404: ("Challenge or solve not found", "APISimpleErrorResponse"),
+        },
+    )
+    def delete(self, challenge_id):
+        # Viewing challenges after the CTF must not allow changing final scores.
+        if not ctftime() or ctf_paused():
+            abort(403)
+
+        user = get_current_user()
+        if config.is_teams_mode() and get_current_team() is None:
+            abort(403)
+
+        challenge = Challenges.query.filter_by(id=challenge_id).first_or_404()
+        if challenge.state == "hidden":
+            abort(404)
+        if challenge.state == "locked":
+            abort(403)
+
+        # Scope by the active account, never by a user-supplied submission ID.
+        solve = Solves.query.filter_by(
+            challenge_id=challenge.id, account_id=user.account_id
+        ).first_or_404()
+        solve_id = solve.id
+        get_chal_class(challenge.type).retract(solve)
+
+        clear_standings()
+        clear_challenges()
+        log(
+            "submissions",
+            "[{date}] {name} retracted solve {solve_id} for challenge {challenge_id}",
+            name=user.name,
+            solve_id=solve_id,
+            challenge_id=challenge_id,
+        )
+        return {"success": True}
+
+
 @challenges_namespace.route("/<challenge_id>/solves")
 class ChallengeSolves(Resource):
     @check_challenge_visibility
