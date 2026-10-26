@@ -190,6 +190,7 @@
               </div>
             </div>
 
+            {% if Configs.allow_solve_retraction == True %}
             <div class="text-center mt-3" x-show="solved" x-cloak>
               <button
                   type="button" class="btn btn-outline-danger"
@@ -201,6 +202,7 @@
               </button>
               <p class="text-danger mt-2" role="alert" x-show="retractionError" x-text="retractionError"></p>
             </div>
+            {% endif %}
 
             <div class="row notification-row">
               <div class="col-12">

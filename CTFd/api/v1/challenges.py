@@ -1063,6 +1063,11 @@ class ChallengeSolve(Resource):
         },
     )
     def delete(self, challenge_id):
+        if str(get_config("allow_solve_retraction", default=False)).lower() not in (
+            "true",
+            "1",
+        ):
+            abort(403)
         # Viewing challenges after the CTF must not allow changing final scores.
         if not ctftime() or ctf_paused():
             abort(403)

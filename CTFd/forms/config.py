@@ -167,6 +167,16 @@ class LegalSettingsForm(BaseForm):
 
 
 class ChallengeSettingsForm(BaseForm):
+    allow_solve_retraction = SelectField(
+        "Users Can Clear Submissions",
+        description=(
+            "Allow users to retract correct submissions and remove their solve points. "
+            "In team mode, any teammate can retract the shared solve. "
+            "Failed attempts, hint purchases, and awards remain."
+        ),
+        choices=[("true", "Enabled"), ("false", "Disabled")],
+        default="false",
+    )
     view_self_submissions = SelectField(
         "View Self Submissions",
         description="Allow users to view their previous submissions",
