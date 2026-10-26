@@ -1,0 +1,9 @@
+# Dr. Jaime C. Acosta
+# Preserve the existing custom build and correct empty-prerequisite imports.
+FROM teaching-ctfd:1c19ae18
+COPY --chown=1001:1001 CTFd/utils/exports/__init__.py /opt/CTFd/CTFd/utils/exports/__init__.py
+COPY --chown=1001:1001 CTFd/__init__.py /opt/CTFd/CTFd/__init__.py
+COPY --chown=1001:1001 CTFd/api/v1/challenges.py /opt/CTFd/CTFd/api/v1/challenges.py
+COPY --chown=1001:1001 CTFd/forms/config.py /opt/CTFd/CTFd/forms/config.py
+COPY --chown=1001:1001 CTFd/themes/admin/templates/configs/challenges.html /opt/CTFd/CTFd/themes/admin/templates/configs/challenges.html
+COPY --chown=1001:1001 CTFd/themes/core/templates/challenge.html /opt/CTFd/CTFd/themes/core/templates/challenge.html

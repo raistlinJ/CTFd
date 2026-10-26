@@ -1,0 +1,63 @@
+# Dr. Jaime C. Acosta
+name: teaching-ctfd
+
+services:
+  ctfd:
+    image: teaching-ctfd:import-fix-20261026
+    build:
+      context: .
+      dockerfile: Dockerfile.teaching
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .data/teaching/server.env
+      - .data/teaching/database.env
+    environment:
+      UPLOAD_FOLDER: /var/uploads
+      LOG_FOLDER: /var/log/CTFd
+      WORKERS: "1"
+      SKIP_DB_PING: "false"
+    volumes:
+      - database:/var/ctfd
+      - uploads:/var/uploads
+      - logs:/var/log/CTFd
+    depends_on:
+      database:
+        condition: service_healthy
+      permissions:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      start_period: 30s
+      retries: 5
+
+  database:
+    image: mariadb:10.11
+    restart: unless-stopped
+    env_file:
+      - .data/teaching/mariadb.env
+    volumes:
+      - mariadb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  permissions:
+    image: alpine:3.22
+    user: root
+    volumes:
+      - database:/var/ctfd
+      - uploads:/var/uploads
+      - logs:/var/log/CTFd
+    command: chown -R 1001:1001 /var/ctfd /var/uploads /var/log/CTFd
+
+volumes:
+  mariadb:
+  database:
+  uploads:
+  logs:
