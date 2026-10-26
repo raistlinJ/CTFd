@@ -65,7 +65,12 @@ To use the auto-generated Docker images directly:
 
 ## Retracting solves
 
-This checkout adds solve retraction to CTFd 3.8.9. In the default `core` theme,
+This checkout adds solve retraction to CTFd 3.8.9. It is disabled by default.
+An administrator can enable **Users Can Clear Submissions** under
+**Config → Challenges**, or with the matching switch in DeployForge's CTFd Manager.
+The setting is `allow_solve_retraction`; disabling it hides the button and rejects
+retraction API requests, including from already-open challenge dialogs.
+In the default `core` theme,
 open a solved challenge and choose **Retract solve**, then confirm. The challenge
 becomes unsolved and can be solved again. In team mode, any current teammate can
 retract the team's solve, including a solve submitted by another teammate.

@@ -13,7 +13,7 @@ from CTFd.models import (
 )
 from CTFd.plugins.challenges import CTFdStandardChallenge
 from CTFd.plugins.dynamic_challenges import DynamicValueChallenge
-from CTFd.utils import set_config
+from CTFd.utils import get_config, set_config
 from CTFd.utils.config import is_teams_mode
 from tests.helpers import (
     FakeRequest,
@@ -38,9 +38,59 @@ def app(request):
     app = create_ctfd(user_mode=getattr(request, "param", "users"), enable_plugins=True)
     try:
         with app.app_context():
+            set_config("allow_solve_retraction", True)
             yield app
     finally:
         destroy_ctfd(app)
+
+
+def test_retraction_defaults_to_disabled():
+    instance = create_ctfd(enable_plugins=True)
+    try:
+        with instance.app_context():
+            assert not get_config("allow_solve_retraction")
+            admin = login_as_user(instance, name="admin")
+            assert b'name="allow_solve_retraction"' in admin.get("/admin/config").data
+            configs = admin.get("/api/v1/configs").get_json()["data"]
+            assert any(item["key"] == "allow_solve_retraction" for item in configs)
+    finally:
+        destroy_ctfd(instance)
+
+
+@pytest.mark.parametrize("app", ["users", "teams"], indirect=True)
+def test_retraction_can_be_disabled_and_reenabled(app):
+    team = gen_team(app.db, member_count=0) if is_teams_mode() else None
+    user = gen_user(app.db, team_id=team.id if team else None)
+    challenge = gen_challenge(app.db)
+    gen_solve(app.db, user_id=user.id, team_id=user.team_id, challenge_id=challenge.id)
+    client = login_as_user(app, name=user.name)
+    assert (
+        "retractSolve()"
+        in client.get("/api/v1/challenges/1").get_json()["data"]["view"]
+    )
+    admin = login_as_user(app, name="admin")
+    response = admin.patch("/api/v1/configs", json={"allow_solve_retraction": False})
+    assert response.status_code == 200
+    assert (
+        "retractSolve()"
+        not in client.get("/api/v1/challenges/1").get_json()["data"]["view"]
+    )
+    assert client.delete("/api/v1/challenges/1/solve", json={}).status_code == 403
+    assert Solves.query.count() == 1
+    assert (
+        client.patch(
+            "/api/v1/configs", json={"allow_solve_retraction": True}
+        ).status_code
+        == 403
+    )
+    assert (
+        admin.patch(
+            "/api/v1/configs", json={"allow_solve_retraction": True}
+        ).status_code
+        == 200
+    )
+    assert client.delete("/api/v1/challenges/1/solve", json={}).status_code == 200
+    assert Solves.query.count() == 0
 
 
 @pytest.mark.parametrize("app", ["users", "teams"], indirect=True)
