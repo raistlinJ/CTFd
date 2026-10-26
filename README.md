@@ -86,7 +86,13 @@ Custom clients can use `DELETE /api/v1/challenges/<challenge_id>/solve` with nor
 CTFd authentication and CSRF protection. The endpoint always targets the current
 user or team; it returns 404 if that account has no solve. Challenge plugins inherit
 `BaseChallenge.retract(solve)` and can override it for custom scoring behavior.
-No database migration is required.
+No custom database migration is required for solve retraction.
+
+This branch includes the current upstream migration history through
+`a3e1c5d7b9f2` (tracking user agents). Existing databases already at that revision
+can start with solve retraction enabled or disabled. If an older cached image
+reports that it cannot locate this revision, rebuild from the updated branch;
+do not change the database's migration marker or delete the database directory.
 
 ## Live Demo
 

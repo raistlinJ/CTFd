@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import pytest
@@ -24,6 +25,7 @@ from tests.helpers import (
     gen_fail,
     gen_flag,
     gen_hint,
+    gen_module,
     gen_solution,
     gen_solve,
     gen_team,
@@ -249,6 +251,27 @@ def test_retraction_requires_current_team(app):
     gen_solve(app.db, user_id=user.id, challenge_id=1)
     client = login_as_user(app, name=user.name)
     assert client.delete("/api/v1/challenges/1/solve", json={}).status_code == 403
+    assert Solves.query.count() == 1
+
+
+@pytest.mark.parametrize("restricted", ["scheduled", "module"])
+def test_retraction_respects_current_challenge_access(app, restricted):
+    user = gen_user(app.db)
+    options = {}
+    if restricted == "scheduled":
+        options["scheduled_at"] = datetime.datetime.utcnow() + datetime.timedelta(
+            days=1
+        )
+    else:
+        options["module_id"] = gen_module(app.db, name="restricted").id
+    challenge = gen_challenge(app.db, **options)
+    gen_solve(app.db, user_id=user.id, challenge_id=challenge.id)
+    challenge_id = challenge.id
+    client = login_as_user(app, name=user.name)
+    assert (
+        client.delete(f"/api/v1/challenges/{challenge_id}/solve", json={}).status_code
+        == 404
+    )
     assert Solves.query.count() == 1
 
 

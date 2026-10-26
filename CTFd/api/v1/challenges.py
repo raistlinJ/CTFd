@@ -1103,6 +1103,9 @@ class ChallengeSolve(Resource):
         if challenge.state == "locked":
             abort(403)
 
+        if not can_access_challenge(challenge, user):
+            abort(404)
+
         # Scope by the active account, never by a user-supplied submission ID.
         solve = Solves.query.filter_by(
             challenge_id=challenge.id, account_id=user.account_id
