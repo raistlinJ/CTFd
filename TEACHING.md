@@ -89,3 +89,31 @@ roll back, stop the current web service, copy `compose.sqlite.yml` back to
 `compose.teaching.yml` in this repository root, and start that Compose configuration.
 This restores the pre-migration SQLite event, not any later MariaDB changes.
 Do not remove either database volume until rollback is no longer needed.
+
+## Navigation connection cleanup (October 27, 2026)
+
+A captured Chrome navigation waited about 57 seconds before sending its request;
+CTFd responded in about 18 ms once the request arrived. Opening DevTools cleared
+the stall. This establishes a browser-side delay but does not prove its cause.
+
+The core theme now closes its notification event stream on `beforeunload` and
+`pagehide`, and reconnects it when a page is restored from the history cache.
+This avoids relying on `unload`, which Chrome reported as prohibited. This is a
+targeted mitigation; recurrence in the original browser still needs monitoring.
+`Dockerfile.navigation` applies only the template change to a working image,
+without rebuilding theme bundles or replacing backend files from this checkout.
+
+Run the lifecycle regression checks with
+`node --test tests/frontend/test_events_lifecycle.cjs`. Browser verification is
+recorded in `.data/teaching/navigation-fix-validation.json`. The prior local image
+is retained as `teaching-ctfd:pre-navigation-cleanup-20261027`; event data and the
+UTEP deployment are unchanged by this local update.
+
+The original `teaching-ctfd:1c19ae18` base image is no longer present locally,
+and the working image's backend differs from this checkout. Use the template-only
+overlay for this update:
+
+```sh
+docker build --build-arg NAVIGATION_BASE_IMAGE=teaching-ctfd:pre-navigation-cleanup-20261027 -f Dockerfile.navigation -t teaching-ctfd:import-fix-20261026 .
+docker compose -f compose.teaching.yml up -d --no-deps --no-build --wait ctfd
+```

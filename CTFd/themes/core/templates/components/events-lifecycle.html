@@ -1,0 +1,33 @@
+<script>
+  (() => {
+    let resumeEvents = false;
+
+    const disconnect = () => {
+      const events = window.CTFd && window.CTFd.events;
+      if (events && events.source) {
+        resumeEvents = resumeEvents || events.source.readyState !== EventSource.CLOSED;
+        events.disconnect();
+      }
+    };
+
+    // Release the streaming connection before the next document is requested.
+    // pagehide also covers history caching, where unload may never run.
+    window.addEventListener("beforeunload", disconnect);
+    window.addEventListener("pagehide", disconnect);
+
+    window.addEventListener("pageshow", event => {
+      const events = window.CTFd && window.CTFd.events;
+      if (event.persisted && resumeEvents && events && events.source) {
+        if (events.source.readyState === EventSource.CLOSED) {
+          events.source = new EventSource(events.source.url);
+          if (events.controller.isMaster) {
+            events.connect();
+          } else {
+            events.controller.check();
+          }
+        }
+        resumeEvents = false;
+      }
+    });
+  })();
+</script>

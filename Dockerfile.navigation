@@ -1,0 +1,5 @@
+# Apply the navigation mitigation to an existing working CTFd image.
+ARG NAVIGATION_BASE_IMAGE=teaching-ctfd:import-fix-20261026
+FROM ${NAVIGATION_BASE_IMAGE}
+COPY --chown=1001:1001 CTFd/themes/core/templates/base.html /opt/CTFd/CTFd/themes/core/templates/base.html
+COPY --chown=1001:1001 CTFd/themes/core/templates/components/events-lifecycle.html /opt/CTFd/CTFd/themes/core/templates/components/events-lifecycle.html
